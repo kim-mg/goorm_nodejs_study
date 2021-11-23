@@ -1,0 +1,10 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io.connect('https://nodejs-test-wuvqx.run.goorm.io/');
+	
+socket.on('news', function (data) {
+	console.log(data);
+	socket.emit('client login', { clientData : '클라이언트 접속' });
+});
+	
+</script>
