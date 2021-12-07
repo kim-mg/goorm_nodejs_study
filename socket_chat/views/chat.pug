@@ -18,6 +18,8 @@ html
 			div
 				// 부트스트랩 textarea
 				textarea#chatLog.form-control(readonly='')
+			div
+				#list
 			form#chat
 				// 부트스트랩 input
 				input#name.form-control(type='text')
@@ -63,3 +65,32 @@ html
 			socket.on('new_connect', function(name){
 			$('#chatLog').append('<알림> ' + name + '님이 채팅창에 접속했습니다.\n');
 			});
+			
+			// 접속중인 유저 업데이트
+			socket.on('update_users', function(data){
+				console.log(data);
+				self.update_userlist(data, socket);
+			});
+			
+			// 유저리스트 업데이트 함수
+			var update_userlist = function(data, this_socket){
+				var self = this;
+				$("#list").empty();
+				console.log(data);
+				
+				$.each(data, function(key, value){
+					var tag = "* ";
+					if (value.isconnect == 1){
+						if (value.id == this_socket.id){
+							$("#list").append("<font color='DodgerBlue'>" + 
+							tag + value.name + 
+							"<br></font>");
+						}
+						else{
+							$("#list").append("<font color='black'>" + 
+							tag + value.name + 
+							"<br></font>");
+						}
+					}
+				});
+			};
