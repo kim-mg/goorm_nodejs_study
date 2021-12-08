@@ -22,15 +22,18 @@ var bingo = {
 		});
 		
 		socket.on("update_users", function(data, user_count){
-			console.log(data);
+			console.log(data, user_count, user_cnt);
 			user_cnt = user_count;
 			self.update_userlist(data, socket);
 		});
 		
-		// join
-		socket.on("connect", function(){
-			socket.emit("join", { username: $('#username').val() });
+		// 도메인 주소로부터 연결되었을 경우 form으로부터 받은 정보
+		/*
+		socket.on("connect", function(data){
+			console.log(data);
+			socket.emit("join", "익명 " + user_cnt);
 		});
+		*/
 		
 		var numbers = [];
 		for(var i=1; i<=25; i++){
@@ -42,6 +45,12 @@ var bingo = {
 			var isOddOrEven = temp%2;
 			var isPosOrNeg = temp > 5 ? 1 : -1;
 			return (isOddOrEven*isPosOrNeg);
+		});
+		
+		$("#user_info").on("submit", function(e){
+			socket.emit("rename", $("#name").val());
+			$("#name").val('');
+			e.preventDefault();
 		});
 		
 		$("table.bingo-board td").each(function(i){
@@ -104,27 +113,29 @@ var bingo = {
 	update_userlist: function(data, this_socket){
 		var self = this;
 		$("#list").empty();
-		console.log(data);
+		// console.log(data);
 		
 		$.each(data, function(key, value){
-			var turn = "(-) ";
-			if(value.turn === true){
-				turn = "(*) ";
-				console.log(value.name);
-				console.log($('#username').val());
-				if(value.id == this_socket.id){
-					self.is_my_turn = true;
+			if(value.isconnect == 1){
+				var turn = "(-) ";
+				if(value.turn === true){
+					turn = "(*) ";
+					console.log(value.name);
+					console.log($('#username').val());
+					if(value.id == this_socket.id){
+						self.is_my_turn = true;
+					}
 				}
-			}
-			if(value.id == this_socket.id){
-				$("#list").append("<font color='DodgerBlue'>" +
-								 turn + value.name + 
-								 "<br></font>");
-			}
-			else{
-				$("#list").append("<font color='black'>" +
-								 turn + value.name + 
-								 "<br></font>");
+				if(value.id == this_socket.id){
+					$("#list").append("<font color='DodgerBlue'>" +
+									 turn + value.name + 
+									 "<br></font>");
+				}
+				else{
+					$("#list").append("<font color='black'>" +
+									 turn + value.name + 
+									 "<br></font>");
+				}
 			}
 		});
 	},
