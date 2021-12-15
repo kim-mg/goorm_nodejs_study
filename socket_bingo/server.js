@@ -29,7 +29,7 @@ io.on('connection', function(socket){
 	users[user_nums] = {};
 	users[user_nums].isconnect = 1;
 	users[user_nums].id = socket.id;
-	users[user_nums].name = username;
+	users[user_nums].username = username;
 	users[user_nums].turn = false;
 	user_nums++;
 	user_count++;
@@ -58,31 +58,39 @@ io.on('connection', function(socket){
 		if(username != socket.name){
 			for(var i=start_idx; i<user_nums; i++){
 				if(users[i].id == socket.id)
-					users[i].name = username;
+					users[i].username = username;
 					socket.username = username;
 			}
 			io.emit('update_users', users, user_count);
 		}
 	});
 	
-	socket.on('game_start', function(data){
-		socket.broadcast.emit("game_started", data);
+	socket.on('game_start', function(){
+		socket.broadcast.emit("game_started", socket.username);
+		turn_count = start_idx;
 		users[turn_count].turn = true;
 		
 		io.emit('update_users', users);
 	});
 	
 	socket.on('select', function(data){
-		socket.broadcast.emit("check_number", data);
+		socket.broadcast.emit("check_number", { username : socket.username, num : data.num});
 		
 		users[turn_count].turn = false;
 		turn_count++;
-		while(users[turn_count].isconnect == 0)
-			turn_count++;
 		
-		if(turn_count >= user_count){
+		if(turn_count >= user_nums){
 			turn_count = start_idx;
-		};
+		}
+		
+		while(users[turn_count].isconnect == 0){
+			turn_count++;
+			
+			if(turn_count >= user_nums){
+				turn_count = start_idx;
+			};
+		}
+		
 		users[turn_count].turn = true;
 		
 		io.sockets.emit('update_users', users);

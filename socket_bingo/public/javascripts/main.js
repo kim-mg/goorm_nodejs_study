@@ -1,23 +1,32 @@
 var bingo = {
 	is_my_turn: Boolean,
 	socket: null,
+	cur_table: {
+		rows: [0, 0, 0, 0, 0],
+		cols: [0, 0, 0, 0, 0],
+		diags: [0, 0]
+	},
 	
 	init: function(socket){
 		var self = this;
 		var user_cnt = 0;
 		
 		this.is_my_turn = false;
+		// this.cur_table = {
+				
+		// };
 		
 		socket = io();
 		
 		socket.on("check_number", function(data){
 			self.where_is_it(data.num);
 			self.print_msg(data.username + "님이 '" + data.num + "'을 선택했습니다.");
+			// self.check_bingo();
 		});
 		
 		socket.on("game_started", function(data){
 			console.log("enter the game_started");
-			self.print_msg(data.username + " 님이 게임을 시작했습니다.");
+			self.print_msg(data + " 님이 게임을 시작했습니다.");
 			$("#start_button").hide();
 		});
 		
@@ -61,7 +70,7 @@ var bingo = {
 					self.print_msg("<알림> 최소 2명부터 게임이 가능합니다.");
 				}
 				else{
-					self.select_num(this, socket);
+					self.select_num(this, socket, i);
 				}
 			});
 		});
@@ -71,7 +80,7 @@ var bingo = {
 				self.print_msg("<알림> 최소 2명부터 게임이 가능합니다.");
 			}
 			else{
-				socket.emit('game_start', { username: $('#username').val() });
+				socket.emit('game_start');
 				self.print_msg("<알림> 게임을 시작합니다.");
 				$("#start_button").hide();
 			}
@@ -80,16 +89,19 @@ var bingo = {
 	},
 	
 	// init 끝
-	select_num: function(obj, socket){
-		if(this.is_my_turn && !$(obj).attr("checked")){
+	select_num: function(obj, socket, idx){
+		var self = this;
+		
+		if(self.is_my_turn && !$(obj).attr("checked")){
 			// send num to other players
-			socket.emit("select", { username: $('#username').val(), num: $(obj).text() });
-			this.check_num(obj);
-			
-			this.is_my_turn = false;
+			socket.emit("select", { num: $(obj).text() });
+			self.count_bingo(idx);
+			self.check_num(obj);
+			self.check_bingo(idx);
+			self.is_my_turn = false;
 		}
 		else{
-			this.print_msg("<알림> 차례가 아닙니다!");
+			self.print_msg("<알림> 차례가 아닙니다!");
 		}
 	},
 	
@@ -99,9 +111,39 @@ var bingo = {
 		
 		$("table.bingo-board td").each(function(i){
 			if($(this).text() == num) {
+				self.count_bingo(i);
+				self.check_bingo(i);
 				self.check_num(this);
 			}
 		});
+	},
+	
+	count_bingo: function(idx){
+		var self = this;
+		
+		var quotient = parseInt(idx / 5);
+		var remainder = idx % 5;
+		var diagonal_left = idx % 6;
+		var diagonal_right = idx % 4;
+
+		if (diagonal_left == 0)
+			self.cur_table.diags[0]++;
+		if (diagonal_right == 0)
+			self.cur_table.diags[1]++;
+		self.cur_table.rows[quotient]++;
+		self.cur_table.cols[remainder]++;
+
+		console.log(self.cur_table);
+	},
+	
+	check_bingo: function(idx){
+		var q = parseInt(idx / 5);
+		var r = idx % 5;
+		if (cur_table[q] == 5 || cur_table[r] == 5 || cur_table[0] == 5 || cur_table[1] == 5){
+			// user가 승리하였습니다.
+			
+			// 게임 init 다시~
+		}
 	},
 	
 	check_num: function(obj){
@@ -120,7 +162,7 @@ var bingo = {
 				var turn = "(-) ";
 				if(value.turn === true){
 					turn = "(*) ";
-					console.log(value.name);
+					console.log(value.username);
 					console.log($('#username').val());
 					if(value.id == this_socket.id){
 						self.is_my_turn = true;
@@ -128,12 +170,12 @@ var bingo = {
 				}
 				if(value.id == this_socket.id){
 					$("#list").append("<font color='DodgerBlue'>" +
-									 turn + value.name + 
+									 turn + value.username + 
 									 "<br></font>");
 				}
 				else{
 					$("#list").append("<font color='black'>" +
-									 turn + value.name + 
+									 turn + value.username + 
 									 "<br></font>");
 				}
 			}
