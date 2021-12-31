@@ -36,6 +36,10 @@ a {
 	margin-bottom: 10px;
 }
 
+#restart_button {
+	display: none;
+}
+
 .bingo-board {
 	border-left: 1px solid gray;
 	border-top: 1px solid gray;
